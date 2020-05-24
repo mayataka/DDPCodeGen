@@ -145,6 +145,7 @@ class AutoGenU(object):
         u = sympy.symbols('u[0:%d]' %(self.__dimu))
         dtau = sympy.Symbol('dtau')
         f = [x[i] + dtau * f[i] for i in range(self.__dimx)]
+        l = dtau * l
         self.__l = l
         self.__lx = symfunc.diff_scalar_func(l, x)
         self.__lu = symfunc.diff_scalar_func(l, u)
@@ -167,9 +168,18 @@ class AutoGenU(object):
         self.__fxVxxfx = symfunc.matrix_dot_matrix(fx_trans, symfunc.matrix_dot_matrix(Vxx, fx))
         self.__fuVxxfx = symfunc.matrix_dot_matrix(fu_trans, symfunc.matrix_dot_matrix(Vxx, fx))
         self.__fuVxxfu = symfunc.matrix_dot_matrix(fu_trans, symfunc.matrix_dot_matrix(Vxx, fu))
-        self.__Vxfxx = symfunc.transpose(symfunc.diff_vector_func(self.__fxVx, x))
-        self.__Vxfux = symfunc.transpose(symfunc.diff_vector_func(self.__fuVx, x))
-        self.__Vxfuu = symfunc.transpose(symfunc.diff_vector_func(self.__fuVx, u))
+        Vxf = sum(f[i] * Vx[i] for i in range(self.__dimx))
+        Vxfx = symfunc.diff_scalar_func(Vxf, x)
+        Vxfu = symfunc.diff_scalar_func(Vxf, u)
+        self.__Vxfxx = symfunc.diff_vector_func(Vxfx, x)
+        self.__Vxfux = symfunc.diff_vector_func(Vxfu, x)
+        self.__Vxfuu = symfunc.diff_vector_func(Vxfu, u)
+        assert len(self.__fxVxxfx) == len(self.__Vxfxx)
+        assert len(self.__fxVxxfx[0]) == len(self.__Vxfxx[0])
+        assert len(self.__fuVxxfx) == len(self.__Vxfux)
+        assert len(self.__fuVxxfx[0]) == len(self.__Vxfux[0])
+        assert len(self.__fuVxxfu) == len(self.__Vxfuu)
+        assert len(self.__fuVxxfu[0]) == len(self.__Vxfuu[0])
         self.__is_function_set = True
 
     def set_solver_parameters(
@@ -206,7 +216,7 @@ class AutoGenU(object):
 
     def set_initialization_parameters(
             self, solution_initial_guess, newton_residual_torelance, 
-            max_newton_iteration, initial_Lagrange_multiplier=None
+            max_newton_iteration
         ):
         """ Set parameters for the initialization of the C/GMRES solvers. 
 
@@ -341,9 +351,9 @@ public:
   // t    : time parameter
   // x    : state vector
   // u    : control input vector
-  void stageCostDerivatives(const double t, const double* x, const double* u, 
-                            double* lx, double* lu, double* lxx, double* lux, 
-                            double* luu) const;
+  void stageCostDerivatives(const double t, const double dtau, const double* x, 
+                            const double* u, double* lx, double* lu, 
+                            double* lxx, double* lux, double* luu) const;
 
   // Computes the partial derivative of terminal cost with respect to state, 
   // i.e., dphi/dx(t, x).
@@ -395,10 +405,10 @@ void OCPModel::stateEquation(const double t, const double dtau, const double* x,
 """ 
 }
 
-void OCPModel::stageCostDerivatives(const double t, const double* x, 
-                                    const double* u, double* lx, double* lu, 
-                                    double* lxx, double* lux, 
-                                    double* luu) const {
+void OCPModel::stageCostDerivatives(const double t, const double dtau, 
+                                    const double* x, const double* u, 
+                                    double* lx, double* lu, double* lxx, 
+                                    double* lux, double* luu) const {
 """
         ])
         self.__write_multiple_functions(
@@ -674,7 +684,7 @@ int OCPModel::dimu() const {
                 for j in range(dim_func):
                     if united_func_cse[1][total_func_dim+j] != 0:
                         writable_file.write(
-                            '  '+return_value_name+'[%d] = '%j
+                            '  '+return_value_name+'[%d] += '%j
                             +sympy.ccode(united_func_cse[1][total_func_dim+j])+';\n'
                         )
                 total_func_dim += dim_func
@@ -683,7 +693,7 @@ int OCPModel::dimu() const {
                 func = func_and_return_value_name[0]
                 return_value_name = func_and_return_value_name[1]
                 writable_file.writelines(
-                    ['  '+return_value_name+'[%d] = '%i
+                    ['  '+return_value_name+'[%d] += '%i
                     +sympy.ccode(func[i])+';\n' for i in range(len(func))]
                 )
 

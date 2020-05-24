@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -O3 -DNDEBUG  -rdynamic CMakeFiles/a.out.dir/main.cpp.o  -o a.out libocp_model.a libmemory_manager.a 

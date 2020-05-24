@@ -26,7 +26,7 @@ def diff_vector_func(vector_func, var):
             Partial derivative of scalar_func with respect to var. If var is a 
             vector, Returns Jacobian.
     """
-    return [[sympy.diff(vector_func[i], var[j]) for j in range(len(var))] for i in range (len(vector_func))]
+    return [[sympy.diff(vector_func[j], var[i]) for j in range(len(vector_func))] for i in range (len(var))]
 
 
 def transpose(mat):
@@ -39,13 +39,14 @@ def vector_dot_vector(vec1, vec2):
 
 
 def matrix_dot_vector(mat, vec):
-    assert len(mat[0]) == len(vec)
-    return [sum(mat[i][j] * vec[j] for j in range(len(mat[0]))) for i in range(len(mat))]
+    assert len(mat) == len(vec)
+    return [sum(mat[j][i] * vec[j] for j in range(len(mat))) for i in range(len(mat[0]))]
 
 
 def matrix_dot_matrix(mat1, mat2):
-    assert len(mat1[0]) == len(mat2)
-    return [[sum(mat1[i][k] * mat2[k][j] for k in range(len(mat1[0]))) for j in range(len(mat2[0]))] for i in range(len(mat1))]
+    assert len(mat1) == len(mat2[0])
+    return [matrix_dot_vector(mat1, mat2[i]) for i in range(len(mat2))]
+
 
 def matrix_to_array(mat):
     array = []

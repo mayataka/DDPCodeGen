@@ -14,18 +14,20 @@ private:
   static constexpr int dimx_ = 4;
   static constexpr int dimu_ = 1;
 
-  static constexpr double m_c = 2;
-  static constexpr double m_p = 0.2;
-  static constexpr double l = 0.5;
+  static constexpr double m1 = 0.2;
+  static constexpr double m2 = 0.7;
+  static constexpr double l1 = 0.3;
+  static constexpr double l2 = 0.3;
+  static constexpr double d1 = 0.15;
+  static constexpr double d2 = 0.257;
+  static constexpr double J1 = 0.006;
+  static constexpr double J2 = 0.051;
   static constexpr double g = 9.80665;
-  static constexpr double u_min = -15;
-  static constexpr double u_max = 15;
-  static constexpr double dummy_weight = 0.1;
 
-  double q[4] = {2.5, 10, 0.01, 0.01};
-  double q_terminal[4] = {2.5, 10, 0.01, 0.01};
-  double x_ref[4] = {0, M_PI, 0, 0};
-  double r[1] = {1};
+  double q[4] = {1, 1, 0.1, 0.1};
+  double q_terminal[4] = {1, 1, 0.1, 0.1};
+  double x_ref[4] = {M_PI, 0, 0, 0};
+  double r[1] = {0.1};
 
 
 public:

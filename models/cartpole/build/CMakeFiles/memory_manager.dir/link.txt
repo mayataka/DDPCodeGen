@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmemory_manager.a  CMakeFiles/memory_manager.dir/home/sotaro/src/continuation-DDP/src/memory_manager.cpp.o
+/usr/bin/ranlib libmemory_manager.a

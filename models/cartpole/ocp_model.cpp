@@ -18,20 +18,25 @@ void OCPModel::stateEquation(const double t, const double dtau, const double* x,
  
 }
 
-void OCPModel::stageCostDerivatives(const double t, const double* x, 
-                                    const double* u, double* lx, double* lu, 
-                                    double* lxx, double* lux, 
-                                    double* luu) const {
-  lx[0] = (1.0/2.0)*q[0]*(2*x[0] - 2*x_ref[0]);
-  lx[1] = (1.0/2.0)*q[1]*(2*x[1] - 2*x_ref[1]);
-  lx[2] = (1.0/2.0)*q[2]*(2*x[2] - 2*x_ref[2]);
-  lx[3] = (1.0/2.0)*q[3]*(2*x[3] - 2*x_ref[3]);
-  lu[0] = r[0]*u[0];
-  lxx[0] = q[0];
-  lxx[5] = q[1];
-  lxx[10] = q[2];
-  lxx[15] = q[3];
-  luu[0] = r[0];
+void OCPModel::stageCostDerivatives(const double t, const double dtau, 
+                                    const double* x, const double* u, 
+                                    double* lx, double* lu, double* lxx, 
+                                    double* lux, double* luu) const {
+  double x0 = dtau*q[0];
+  double x1 = dtau*q[1];
+  double x2 = dtau*q[2];
+  double x3 = dtau*q[3];
+  double x4 = dtau*r[0];
+  lx[0] += (1.0/2.0)*x0*(2*x[0] - 2*x_ref[0]);
+  lx[1] += (1.0/2.0)*x1*(2*x[1] - 2*x_ref[1]);
+  lx[2] += (1.0/2.0)*x2*(2*x[2] - 2*x_ref[2]);
+  lx[3] += (1.0/2.0)*x3*(2*x[3] - 2*x_ref[3]);
+  lu[0] += u[0]*x4;
+  lxx[0] += x0;
+  lxx[5] += x1;
+  lxx[10] += x2;
+  lxx[15] += x3;
+  luu[0] += x4;
  
 }
 
@@ -93,55 +98,55 @@ void OCPModel::dynamicsDerivatives(const double t, const double dtau,
   double x34 = x21*x23;
   double x35 = -x14*x30 + x33*x34;
   double x36 = x1*x34;
-  double x37 = Vxx[1] + Vxx[2]*x22 + Vxx[3]*x35;
-  double x38 = Vxx[0]*dtau;
-  double x39 = Vxx[2] + x38;
-  double x40 = Vxx[1]*dtau + Vxx[3];
-  double x41 = Vxx[10]*x22 + Vxx[11]*x35 + Vxx[9];
-  double x42 = Vxx[13] + Vxx[14]*x22 + Vxx[15]*x35;
-  double x43 = Vxx[5] + Vxx[6]*x22 + Vxx[7]*x35;
-  double x44 = Vxx[8]*dtau;
+  double x37 = Vxx[0]*dtau;
+  double x38 = Vxx[1]*dtau;
+  double x39 = Vxx[12]*x35 + Vxx[4] + Vxx[8]*x22;
+  double x40 = Vxx[10]*x22 + Vxx[14]*x35 + Vxx[6];
+  double x41 = Vxx[11]*x22 + Vxx[15]*x35 + Vxx[7];
+  double x42 = Vxx[13]*x35 + Vxx[5] + Vxx[9]*x22;
+  double x43 = Vxx[8] + x37;
+  double x44 = Vxx[2]*dtau;
   double x45 = Vxx[10] + x44;
-  double x46 = Vxx[12]*dtau;
-  double x47 = Vxx[14] + x46;
-  double x48 = Vxx[4]*dtau;
-  double x49 = Vxx[6] + x48;
-  double x50 = Vxx[11] + Vxx[9]*dtau;
-  double x51 = Vxx[13]*dtau + Vxx[15];
-  double x52 = Vxx[5]*dtau + Vxx[7];
+  double x46 = Vxx[3]*dtau;
+  double x47 = Vxx[11] + x46;
+  double x48 = Vxx[9] + x38;
+  double x49 = Vxx[12] + Vxx[4]*dtau;
+  double x50 = Vxx[14] + Vxx[6]*dtau;
+  double x51 = Vxx[15] + Vxx[7]*dtau;
+  double x52 = Vxx[13] + Vxx[5]*dtau;
   double x53 = 2*x11;
   double x54 = 8*dtau*pow(m_p, 2)*x31*x7/pow(x9, 3);
   double x55 = 4*x10*x27;
   double x56 = 2*x30;
   double x57 = 4*l*x[1];
-  fxVx[0] = Vx[0];
-  fxVx[1] = Vx[1] + Vx[2]*x22 + Vx[3]*x35;
-  fxVx[2] = Vx[0]*dtau + Vx[2];
-  fxVx[3] = Vx[1]*dtau + Vx[3];
-  fuVx[0] = Vx[2]*x21 - Vx[3]*x36;
-  fxVxxfx[0] = Vxx[0];
-  fxVxxfx[1] = x37;
-  fxVxxfx[2] = x39;
-  fxVxxfx[3] = x40;
-  fxVxxfx[4] = Vxx[12]*x35 + Vxx[4] + Vxx[8]*x22;
-  fxVxxfx[5] = x22*x41 + x35*x42 + x43;
-  fxVxxfx[6] = x22*x45 + x35*x47 + x49;
-  fxVxxfx[7] = x22*x50 + x35*x51 + x52;
-  fxVxxfx[8] = Vxx[8] + x38;
-  fxVxxfx[9] = dtau*x37 + x41;
-  fxVxxfx[10] = dtau*x39 + x45;
-  fxVxxfx[11] = dtau*x40 + x50;
-  fxVxxfx[12] = Vxx[12] + x48;
-  fxVxxfx[13] = dtau*x43 + x42;
-  fxVxxfx[14] = dtau*x49 + x47;
-  fxVxxfx[15] = dtau*x52 + x51;
-  fuVxxfx[0] = -x1*x20*x23*x46 + x20*x44;
-  fuVxxfx[1] = x21*x41 - x36*x42;
-  fuVxxfx[2] = x21*x45 - x36*x47;
-  fuVxxfx[3] = x21*x50 - x36*x51;
-  fuVxxfu[0] = x21*(Vxx[10]*x21 - Vxx[11]*x36) - x36*(Vxx[14]*x21 - Vxx[15]*x36);
-  Vxfxx[5] = Vx[2]*(-x19*x55 + x21*(m_p*x13*x18 + x12*(x15 - x2) - x5) - x32*x53 + x53*x8 + x54*x6) + Vx[3]*(-x23*x33*x55 + x29*x54 - x32*x56 + x34*(-x15*x27 + x24 + x26 + 4*x28 - x32*x57 + x57*x8) + x56*x8);
-  Vxfux[1] = -Vx[2]*x10*x14 + Vx[3]*x0*x34 + 2*Vx[3]*x10*x12*x23*x31;
+  fxVx[0] += Vx[0];
+  fxVx[1] += Vx[1] + Vx[2]*x22 + Vx[3]*x35;
+  fxVx[2] += Vx[0]*dtau + Vx[2];
+  fxVx[3] += Vx[1]*dtau + Vx[3];
+  fuVx[0] += Vx[2]*x21 - Vx[3]*x36;
+  fxVxxfx[0] += Vxx[0];
+  fxVxxfx[1] += Vxx[1] + Vxx[2]*x22 + Vxx[3]*x35;
+  fxVxxfx[2] += Vxx[2] + x37;
+  fxVxxfx[3] += Vxx[3] + x38;
+  fxVxxfx[4] += x39;
+  fxVxxfx[5] += x22*x40 + x35*x41 + x42;
+  fxVxxfx[6] += dtau*x39 + x40;
+  fxVxxfx[7] += dtau*x42 + x41;
+  fxVxxfx[8] += x43;
+  fxVxxfx[9] += x22*x45 + x35*x47 + x48;
+  fxVxxfx[10] += dtau*x43 + x45;
+  fxVxxfx[11] += dtau*x48 + x47;
+  fxVxxfx[12] += x49;
+  fxVxxfx[13] += x22*x50 + x35*x51 + x52;
+  fxVxxfx[14] += dtau*x49 + x50;
+  fxVxxfx[15] += dtau*x52 + x51;
+  fuVxxfx[0] += -x1*x20*x23*x46 + x20*x44;
+  fuVxxfx[1] += x21*x40 - x36*x41;
+  fuVxxfx[2] += x21*x45 - x36*x47;
+  fuVxxfx[3] += x21*x50 - x36*x51;
+  fuVxxfu[0] += x21*(Vxx[10]*x21 - Vxx[14]*x36) - x36*(Vxx[11]*x21 - Vxx[15]*x36);
+  Vxfxx[5] += Vx[2]*(-x19*x55 + x21*(m_p*x13*x18 + x12*(x15 - x2) - x5) - x32*x53 + x53*x8 + x54*x6) + Vx[3]*(-x23*x33*x55 + x29*x54 - x32*x56 + x34*(-x15*x27 + x24 + x26 + 4*x28 - x32*x57 + x57*x8) + x56*x8);
+  Vxfux[1] += -Vx[2]*x10*x14 + Vx[3]*x0*x34 + 2*Vx[3]*x10*x12*x23*x31;
  
 }
 

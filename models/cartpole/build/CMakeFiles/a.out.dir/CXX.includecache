@@ -1,0 +1,40 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../../../include/DDP.hpp
+iostream
+-
+assert.h
+-
+eigen3/Eigen/Core
+-
+eigen3/Eigen/LU
+-
+ocp_model.hpp
+../../../include/ocp_model.hpp
+memory_manager.hpp
+../../../include/memory_manager.hpp
+
+../../../include/memory_manager.hpp
+
+/home/sotaro/src/continuation-DDP/models/cartpole/main.cpp
+iostream
+-
+chrono
+-
+ocp_model.hpp
+/home/sotaro/src/continuation-DDP/models/cartpole/ocp_model.hpp
+DDP.hpp
+/home/sotaro/src/continuation-DDP/models/cartpole/DDP.hpp
+memory_manager.hpp
+/home/sotaro/src/continuation-DDP/models/cartpole/memory_manager.hpp
+
+/home/sotaro/src/continuation-DDP/models/cartpole/ocp_model.hpp
+cmath
+-
+
