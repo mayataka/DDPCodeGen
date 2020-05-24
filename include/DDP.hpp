@@ -1,5 +1,5 @@
-#ifndef DDP_H
-#define DDP_H
+#ifndef CDDP_DDP_HPP_
+#define CDDP_DDP_HPP_
 
 #include <iostream>
 #include <assert.h>
@@ -61,7 +61,7 @@ public:
 
   void rolloutState(const double t, const double* x) {
     ocp_model_.stateEquation(t, dtau_, x, u_[0], x_[0]);
-    for (int i=1; i<N_-1; ++i) {
+    for (int i=1; i<N_; ++i) {
       ocp_model_.stateEquation(t+i*dtau_, dtau_, x_[i-1], u_[i], x_[i]);
     }
   }
@@ -104,11 +104,11 @@ public:
             + Eigen::Map<Eigen::Matrix<double, dimu, dimx>>(Kx_[i]).transpose()
               * Eigen::Map<Eigen::Matrix<double, dimu, 1>>(Qu_[i]);
     }
-    ocp_model_.stageCostDerivatives(t, dtau_, x, u_[0], Qx_[0], 
-                                    Qu_[0], Qxx_[0], Qux_[0], Quu_[0]);
-    ocp_model_.dynamicsDerivatives(t, dtau_, x, u_[0], Vx_[0], 
-                                    Vxx_[0], Qx_[0], Qu_[0], Qxx_[0], Qux_[0], 
-                                  Quu_[0], Qxx_[0], Qux_[0], Quu_[0]);
+    ocp_model_.stageCostDerivatives(t, dtau_, x, u_[0], Qx_[0], Qu_[0], Qxx_[0], 
+                                    Qux_[0], Quu_[0]);
+    ocp_model_.dynamicsDerivatives(t, dtau_, x, u_[0], Vx_[0], Vxx_[0], Qx_[0], 
+                                   Qu_[0], Qxx_[0], Qux_[0], Quu_[0], Qxx_[0], 
+                                   Qux_[0], Quu_[0]);
     Q_inv_ = Eigen::Map<Eigen::Matrix<double, dimu, dimu>>(Quu_[0]).inverse();
     Eigen::Map<Eigen::VectorXd>(k_[0], dimu)
         = - Q_inv_ * Eigen::Map<Eigen::Matrix<double, dimu, 1>>(Qu_[0]);
@@ -137,9 +137,24 @@ public:
     }
   }
 
-  void printSolution() {
+  void getInitialControlInput(double* u) const {
+    Eigen::Map<Eigen::VectorXd>(u, dimu) 
+        = Eigen::Map<Eigen::Matrix<double, dimu, 1>>(u_[0]);
+  }
+
+  void predictState(const double t, const double* x, 
+                    const double prediction_length, double* x1) const {
+    ocp_model_.stateEquation(t, prediction_length, x, u_[0], x1);
+  }
+
+  void printSolution() const {
     for (int i=0; i<N_; ++i) {
-      std::cout << Eigen::Map<Eigen::Matrix<double, dimu, 1>>(u_[i]).transpose() << std::endl;
+      std::cout << "u[" << i << "] = " 
+                << Eigen::Map<Eigen::VectorXd>(u_[i], dimu).transpose() 
+                << std::endl;
+      std::cout << "x[" << i << "] = " 
+                << Eigen::Map<Eigen::VectorXd>(x_[i], dimx).transpose() 
+                << std::endl;
     }
   }
 
@@ -173,4 +188,4 @@ private:
 } // namespace cddp
 
 
-#endif // DDP_H
+#endif // CDDP_DDP_HPP_

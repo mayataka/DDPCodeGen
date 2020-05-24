@@ -1,0 +1,5 @@
+simulation name: cartpole
+simulation time: 10 [sec]
+Total CPU time for control update: 0.31898 [sec]
+sampling time: 0.001 [sec]
+CPU time for per control update: 3.1898e-05 [sec]

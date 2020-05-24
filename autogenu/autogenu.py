@@ -183,7 +183,7 @@ class AutoGenU(object):
         self.__is_function_set = True
 
     def set_solver_parameters(
-            self, T_f, alpha, N, finite_difference_increment, zeta, kmax
+            self, T_f, alpha, N
         ):
         """ Sets parameters of the NMPC solvers based on the C/GMRES method. 
 
@@ -203,15 +203,9 @@ class AutoGenU(object):
         assert T_f > 0
         assert alpha > 0
         assert N > 0
-        assert finite_difference_increment > 0
-        assert zeta > 0
-        assert kmax > 0
         self.__T_f = T_f
         self.__alpha = alpha
         self.__N = N
-        self.__finite_difference_increment = finite_difference_increment
-        self.__zeta = zeta
-        self.__kmax = kmax
         self.__is_solver_paramters_set = True
 
     def set_initialization_parameters(
@@ -400,7 +394,7 @@ void OCPModel::stateEquation(const double t, const double dtau, const double* x,
                              const double* u, double* dx) const {
 """ 
         ])
-        self.__write_function(f_model_c, self.__f, 'dx', use_cse)
+        self.__write_function(f_model_c, self.__f, 'dx', "=", use_cse)
         f_model_c.writelines([
 """ 
 }
@@ -412,7 +406,7 @@ void OCPModel::stageCostDerivatives(const double t, const double dtau,
 """
         ])
         self.__write_multiple_functions(
-            f_model_c, use_cse, [self.__lx, 'lx'], [self.__lu, 'lu'], 
+            f_model_c, use_cse, "+=", [self.__lx, 'lx'], [self.__lu, 'lu'], 
             [symfunc.matrix_to_array(self.__lxx), 'lxx'], 
             [symfunc.matrix_to_array(self.__lux), 'lux'], 
             [symfunc.matrix_to_array(self.__luu), 'luu']
@@ -427,7 +421,7 @@ void OCPModel::terminalCostDerivatives(const double t, const double* x,
 """
         ])
         self.__write_multiple_functions(
-            f_model_c, use_cse, [self.__phix, 'phix'], 
+            f_model_c, use_cse, "=", [self.__phix, 'phix'], 
             [symfunc.matrix_to_array(self.__phixx), 'phixx']
         )
         f_model_c.writelines([
@@ -444,7 +438,8 @@ void OCPModel::dynamicsDerivatives(const double t, const double dtau,
 """
         ])
         self.__write_multiple_functions(
-            f_model_c, use_cse, [self.__fxVx, 'fxVx'], [self.__fuVx, 'fuVx'],
+            f_model_c, use_cse, "+=", [self.__fxVx, 'fxVx'], 
+            [self.__fuVx, 'fuVx'],
             [symfunc.matrix_to_array(self.__fxVxxfx), 'fxVxxfx'],
             [symfunc.matrix_to_array(self.__fuVxxfx), 'fuVxxfx'],
             [symfunc.matrix_to_array(self.__fuVxxfu), 'fuVxxfu'],
@@ -619,7 +614,8 @@ int OCPModel::dimu() const {
 
 
     def __write_function(
-            self, writable_file, function, return_value_name, use_cse=True
+            self, writable_file, function, return_value_name, 
+            return_operator="=", use_cse=True
         ):
         """ Write input symbolic function onto writable_file. The function's 
             return value name must be set. use_cse is optional.
@@ -642,17 +638,18 @@ int OCPModel::dimu() const {
                 )
             for i in range(len(func_cse[1])):
                 writable_file.write(
-                    '  '+return_value_name+'[%d] = '%i
+                    '  '+return_value_name+'[%d] '%i+return_operator+' '
                     +sympy.ccode(func_cse[1][i])+';\n'
                 )
         else:
             writable_file.writelines(
-                ['  '+return_value_name+'[%d] = '%i
+                ['  '+return_value_name+'[%d] '%i+return_operator+' '
                 +sympy.ccode(function[i])+';\n' for i in range(len(function))]
             )
 
     def __write_multiple_functions(
-            self, writable_file, use_cse=True, *functions_and_return_value_names
+            self, writable_file, use_cse=True, return_operator="=",
+            *functions_and_return_value_names
         ):
         """ Write input symbolic function onto writable_file. The function's 
             return value name must be set. use_cse is optional.
@@ -684,7 +681,7 @@ int OCPModel::dimu() const {
                 for j in range(dim_func):
                     if united_func_cse[1][total_func_dim+j] != 0:
                         writable_file.write(
-                            '  '+return_value_name+'[%d] += '%j
+                            '  '+return_value_name+'[%d] '%j+return_operator+' '
                             +sympy.ccode(united_func_cse[1][total_func_dim+j])+';\n'
                         )
                 total_func_dim += dim_func
@@ -693,7 +690,7 @@ int OCPModel::dimu() const {
                 func = func_and_return_value_name[0]
                 return_value_name = func_and_return_value_name[1]
                 writable_file.writelines(
-                    ['  '+return_value_name+'[%d] += '%i
+                    ['  '+return_value_name+'[%d] '%i+return_operator+' '
                     +sympy.ccode(func[i])+';\n' for i in range(len(func))]
                 )
 

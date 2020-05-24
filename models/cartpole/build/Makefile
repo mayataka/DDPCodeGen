@@ -176,6 +176,33 @@ home/sotaro/src/continuation-DDP/src/memory_manager.cpp.s:
 	$(MAKE) -f CMakeFiles/memory_manager.dir/build.make CMakeFiles/memory_manager.dir/home/sotaro/src/continuation-DDP/src/memory_manager.cpp.s
 .PHONY : home/sotaro/src/continuation-DDP/src/memory_manager.cpp.s
 
+home/sotaro/src/continuation-DDP/src/simulation_data_saver.o: home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.o
+
+.PHONY : home/sotaro/src/continuation-DDP/src/simulation_data_saver.o
+
+# target to build an object file
+home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.o:
+	$(MAKE) -f CMakeFiles/a.out.dir/build.make CMakeFiles/a.out.dir/home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.o
+.PHONY : home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.o
+
+home/sotaro/src/continuation-DDP/src/simulation_data_saver.i: home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.i
+
+.PHONY : home/sotaro/src/continuation-DDP/src/simulation_data_saver.i
+
+# target to preprocess a source file
+home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.i:
+	$(MAKE) -f CMakeFiles/a.out.dir/build.make CMakeFiles/a.out.dir/home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.i
+.PHONY : home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.i
+
+home/sotaro/src/continuation-DDP/src/simulation_data_saver.s: home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.s
+
+.PHONY : home/sotaro/src/continuation-DDP/src/simulation_data_saver.s
+
+# target to generate assembly for a file
+home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.s:
+	$(MAKE) -f CMakeFiles/a.out.dir/build.make CMakeFiles/a.out.dir/home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.s
+.PHONY : home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -244,6 +271,9 @@ help:
 	@echo "... home/sotaro/src/continuation-DDP/src/memory_manager.o"
 	@echo "... home/sotaro/src/continuation-DDP/src/memory_manager.i"
 	@echo "... home/sotaro/src/continuation-DDP/src/memory_manager.s"
+	@echo "... home/sotaro/src/continuation-DDP/src/simulation_data_saver.o"
+	@echo "... home/sotaro/src/continuation-DDP/src/simulation_data_saver.i"
+	@echo "... home/sotaro/src/continuation-DDP/src/simulation_data_saver.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

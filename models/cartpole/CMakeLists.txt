@@ -28,6 +28,7 @@ target_include_directories(
 add_executable(
     a.out 
     ${MODEL_DIR}/main.cpp
+    ${SRC_DIR}/simulation_data_saver.cpp
 )
 target_include_directories(
     a.out

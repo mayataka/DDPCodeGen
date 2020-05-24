@@ -1,36 +1,28 @@
 #include <iostream>
 #include <chrono>
+#include <string>
 
 #include "ocp_model.hpp"
-#include "DDP.hpp"
-#include "memory_manager.hpp"
+#include "NMPC.hpp"
+#include "simulator.hpp"
 
 
 int main() {
   const int N = 100;
-  const double horizon_length = 0.001;
-  cddp::DDP<4, 1> ddp(N);
-  ddp.setHorizonLength(horizon_length);
-  const double t = 0;
-  double *x = cddp::memorymanager::NewVector(ddp.dim_x());
-  Eigen::Map<Eigen::VectorXd>(x, ddp.dim_x()) = Eigen::VectorXd::Random(ddp.dim_x());
+  const double T_f = 2;
+  const double alpha = 1;
+  const double dt = 0.001;
+  cddp::NMPC<4, 1> nmpc(T_f, alpha, N, dt);
 
-  std::chrono::system_clock::time_point start_clock, end_clock;
-
-  const int num_ddp = 100000;
-  start_clock = std::chrono::system_clock::now();
-  for (int i=0; i<num_ddp; ++i) {
-    ddp.rolloutState(t, x);
-    ddp.computeBackwardPass(t, x);
-    ddp.computeForwardPass(t, x);
-  }
-  end_clock = std::chrono::system_clock::now();
-  ddp.printSolution();
-  double total_time = std::chrono::duration_cast<std::chrono::microseconds>(end_clock-start_clock).count();
-  total_time *= 1e-06;
-  double average_time = total_time / num_ddp;
-  std::cout << "average computational time per iteration is " << average_time << std::endl;
+  double *x0 = cddp::memorymanager::NewVector(nmpc.dim_x());
+  // Eigen::Map<Eigen::VectorXd>(x0, nmpc.dim_x()) = Eigen::VectorXd::Random(nmpc.dim_x());
+  const double simulation_time = 10;
+  const double sampling_period = 0.001;
+  const std::string save_dir = "simulation_result";
+  const std::string save_file_name = "cartpole";
+  cddp::simulation<cddp::NMPC<4, 1>>(nmpc, x0, simulation_time, sampling_period, 
+                                     save_dir, save_file_name);
   
-  cddp::memorymanager::DeleteVector(x);
+  cddp::memorymanager::DeleteVector(x0);
   return 0;
 }

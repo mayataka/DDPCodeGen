@@ -60,14 +60,14 @@ void OCPModel::stageCostDerivatives(const double t, const double dtau,
 
 void OCPModel::terminalCostDerivatives(const double t, const double* x, 
                                        double* phix, double* phixx) const {
-  phix[0] += (1.0/2.0)*q_terminal[0]*(2*x[0] - 2*x_ref[0]);
-  phix[1] += (1.0/2.0)*q_terminal[1]*(2*x[1] - 2*x_ref[1]);
-  phix[2] += (1.0/2.0)*q_terminal[2]*(2*x[2] - 2*x_ref[2]);
-  phix[3] += (1.0/2.0)*q_terminal[3]*(2*x[3] - 2*x_ref[3]);
-  phixx[0] += q_terminal[0];
-  phixx[5] += q_terminal[1];
-  phixx[10] += q_terminal[2];
-  phixx[15] += q_terminal[3];
+  phix[0] = (1.0/2.0)*q_terminal[0]*(2*x[0] - 2*x_ref[0]);
+  phix[1] = (1.0/2.0)*q_terminal[1]*(2*x[1] - 2*x_ref[1]);
+  phix[2] = (1.0/2.0)*q_terminal[2]*(2*x[2] - 2*x_ref[2]);
+  phix[3] = (1.0/2.0)*q_terminal[3]*(2*x[3] - 2*x_ref[3]);
+  phixx[0] = q_terminal[0];
+  phixx[5] = q_terminal[1];
+  phixx[10] = q_terminal[2];
+  phixx[15] = q_terminal[3];
  
 }
 
