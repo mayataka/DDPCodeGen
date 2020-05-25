@@ -23,8 +23,8 @@ void simulation(NMPCSolver& nmpc, const double* x0, const double simulation_time
   std::chrono::system_clock::time_point start_clock, end_clock;
 
   std::string savefile_header = save_dir + "/" + savefile_name;
-  std::ofstream state_data(savefile_header + "_x.dat"), 
-    control_input_data(savefile_header + "_u.dat"), 
+  std::ofstream state_data(savefile_header + "_state.dat"), 
+    control_input_data(savefile_header + "_control_input.dat"), 
     conditions_data(savefile_header + "_conditions.dat");
 
   double total_time = 0;
@@ -33,7 +33,7 @@ void simulation(NMPCSolver& nmpc, const double* x0, const double simulation_time
   nmpc.getControlInput(u);
 
   std::cout << "Start simulation" << std::endl;
-  for (double t=sampling_period; t<simulation_time; t+=sampling_period) {
+  for (double t=0; t<simulation_time; t+=sampling_period) {
     // Saves the current datas.
     SaveSimulationData(ocp_model.dimx(), ocp_model.dimu(), state_data, 
                        control_input_data, t, x, u);
@@ -43,7 +43,7 @@ void simulation(NMPCSolver& nmpc, const double* x0, const double simulation_time
 
     // Updates the solution and measure the computational time of the update.
     start_clock = std::chrono::system_clock::now();
-    nmpc.updateSolution(t, x, sampling_period);
+    nmpc.updateSolution(t, x);
     nmpc.getControlInput(u);
     end_clock = std::chrono::system_clock::now();
 

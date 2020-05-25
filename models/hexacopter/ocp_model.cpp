@@ -4,8 +4,40 @@
 
 namespace cddp {
 
+void OCPModel::dynamics(const double t, const double dtau, const double* x, 
+                        const double* u, double* dx) const {
+  double x0 = sin(x[3]);
+  double x1 = sin(x[5]);
+  double x2 = cos(x[5]);
+  double x3 = cos(x[3]);
+  double x4 = x3*sin(x[4]);
+  double x5 = u[1] + u[3] + u[5];
+  double x6 = (u[0] + u[2] + u[4] + x5)/m;
+  double x7 = 1.0/Ixx;
+  double x8 = (1.0/2.0)*u[0];
+  double x9 = (1.0/2.0)*u[2];
+  double x10 = (1.0/2.0)*u[3];
+  double x11 = (1.0/2.0)*u[5];
+  double x12 = 1.0/Iyy;
+  double x13 = sqrt(3);
+  double x14 = 1.0/Izz;
+  dx[0] = x[6];
+  dx[1] = x[7];
+  dx[2] = x[8];
+  dx[3] = x[9];
+  dx[4] = x[10];
+  dx[5] = x[11];
+  dx[6] = x6*(x0*x1 + x2*x4);
+  dx[7] = x6*(-x0*x2 + x1*x4);
+  dx[8] = -g + x3*x6*cos(x[4]);
+  dx[9] = l*x7*(-u[1] + u[4] + x10 + x11 - x8 - x9) + x7*x[10]*x[11]*(Iyy - Izz);
+  dx[10] = l*x12*(x10*x13 - x11*x13 - x13*x8 + x13*x9) + x12*x[11]*x[9]*(-Ixx + Izz);
+  dx[11] = x14*x[10]*x[9]*(Ixx - Iyy) + x14*(-gamma*x[11] + k*(-u[0] - u[2] - u[4] + x5));
+ 
+}
+
 void OCPModel::stateEquation(const double t, const double dtau, const double* x, 
-                             const double* u, double* dx) const {
+                             const double* u, double* F) const {
   double x0 = sin(x[3]);
   double x1 = sin(x[5]);
   double x2 = cos(x[5]);
@@ -22,18 +54,18 @@ void OCPModel::stateEquation(const double t, const double dtau, const double* x,
   double x13 = 1.0/Iyy;
   double x14 = sqrt(3);
   double x15 = 1.0/Izz;
-  dx[0] = dtau*x[6] + x[0];
-  dx[1] = dtau*x[7] + x[1];
-  dx[2] = dtau*x[8] + x[2];
-  dx[3] = dtau*x[9] + x[3];
-  dx[4] = dtau*x[10] + x[4];
-  dx[5] = dtau*x[11] + x[5];
-  dx[6] = x7*(x0*x1 + x2*x4) + x[6];
-  dx[7] = x7*(-x0*x2 + x1*x4) + x[7];
-  dx[8] = dtau*(-g + x3*x6*cos(x[4])) + x[8];
-  dx[9] = dtau*(l*x8*(-u[1] + u[4] - x10 + x11 + x12 - x9) + x8*x[10]*x[11]*(Iyy - Izz)) + x[9];
-  dx[10] = dtau*(l*x13*(x10*x14 + x11*x14 - x12*x14 - x14*x9) + x13*x[11]*x[9]*(-Ixx + Izz)) + x[10];
-  dx[11] = dtau*(x15*x[10]*x[9]*(Ixx - Iyy) + x15*(-gamma*x[11] + k*(-u[0] - u[2] - u[4] + x5))) + x[11];
+  F[0] = dtau*x[6] + x[0];
+  F[1] = dtau*x[7] + x[1];
+  F[2] = dtau*x[8] + x[2];
+  F[3] = dtau*x[9] + x[3];
+  F[4] = dtau*x[10] + x[4];
+  F[5] = dtau*x[11] + x[5];
+  F[6] = x7*(x0*x1 + x2*x4) + x[6];
+  F[7] = x7*(-x0*x2 + x1*x4) + x[7];
+  F[8] = dtau*(-g + x3*x6*cos(x[4])) + x[8];
+  F[9] = dtau*(l*x8*(-u[1] + u[4] - x10 + x11 + x12 - x9) + x8*x[10]*x[11]*(Iyy - Izz)) + x[9];
+  F[10] = dtau*(l*x13*(x10*x14 + x11*x14 - x12*x14 - x14*x9) + x13*x[11]*x[9]*(-Ixx + Izz)) + x[10];
+  F[11] = dtau*(x15*x[10]*x[9]*(Ixx - Iyy) + x15*(-gamma*x[11] + k*(-u[0] - u[2] - u[4] + x5))) + x[11];
  
 }
 

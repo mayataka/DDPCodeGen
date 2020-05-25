@@ -118,7 +118,7 @@ public:
     Eigen::Map<Eigen::Matrix<double, dimu, 1>>(u_[0]) 
         += Eigen::Map<Eigen::Matrix<double, dimu, 1>>(k_[0]);
     ocp_model_.stateEquation(t, dtau_, x, u_[0], x1_);
-    for (int i=1; i<N_; ++i) {
+    for (int i=1; i<N_-1; ++i) {
       Eigen::Map<Eigen::VectorXd>(u_[i], dimu) 
           += Eigen::Map<Eigen::Matrix<double, dimu, 1>>(k_[i]) 
             + Eigen::Map<Eigen::Matrix<double, dimu, dimx>>(Kx_[i])
@@ -128,11 +128,19 @@ public:
           = Eigen::Map<Eigen::Matrix<double, dimx, 1>>(x1_, dimx_);
       ocp_model_.stateEquation(t+i*dtau_, dtau_, x_[i-1], u_[i], x1_);
     }
+    Eigen::Map<Eigen::VectorXd>(u_[N_-1], dimu) 
+        += Eigen::Map<Eigen::Matrix<double, dimu, 1>>(k_[N_-1]) 
+          + Eigen::Map<Eigen::Matrix<double, dimu, dimx>>(Kx_[N_-1])
+            * (Eigen::Map<Eigen::Matrix<double, dimx, 1>>(x1_)
+                -Eigen::Map<Eigen::Matrix<double, dimx, 1>>(x_[N_-2]));
+    Eigen::Map<Eigen::VectorXd>(x_[N_-2], dimx_) 
+        = Eigen::Map<Eigen::Matrix<double, dimx, 1>>(x1_, dimx_);
+    ocp_model_.stateEquation(t+(N_-1)*dtau_, dtau_, x_[N_-2], u_[N_-1], x_[N_-1]);
   }
 
   void setControlInput(const double* u) {
     for (int i=0; i<N_; ++i) {
-      Eigen::Map<Eigen::Matrix<double, dimu, 1>>(u_[i]) 
+      Eigen::Map<Eigen::VectorXd>(u_[i], dimu) 
           = Eigen::Map<const Eigen::Matrix<double, dimu, 1>>(u);
     }
   }

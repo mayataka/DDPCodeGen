@@ -4,8 +4,39 @@
 
 namespace cddp {
 
+void OCPModel::dynamics(const double t, const double dtau, const double* x, 
+                        const double* u, double* dx) const {
+  double x0 = pow(l1, 2);
+  double x1 = m2*x0;
+  double x2 = l1*m2;
+  double x3 = d2*x2;
+  double x4 = x3*cos(x[1]);
+  double x5 = pow(d2, 2);
+  double x6 = J2 + m2*x5;
+  double x7 = J1 + pow(d1, 2)*m1;
+  double x8 = 1.0/(x1 + 2.0*x4 + x6 + x7);
+  double x9 = d2*g;
+  double x10 = m2*x9*sin(x[0] + x[1]);
+  double x11 = d1*m1;
+  double x12 = x11 + x2;
+  double x13 = g*sin(x[0]);
+  double x14 = x3*sin(x[1]);
+  double x15 = 2.0*x[1];
+  double x16 = 0.5*l1;
+  double x17 = pow(m2, 2)*x5;
+  double x18 = x16*x17;
+  double x19 = pow(x[2], 2.0);
+  double x20 = x[2]*x[3];
+  double x21 = pow(x[3], 2.0);
+  dx[0] = x[2];
+  dx[1] = x[3];
+  dx[2] = x8*(u[0] - x10 - x12*x13 + 2.0*x14*x[3]*(x[2] + 0.5*x[3]));
+  dx[3] = x8*(-g*x18*sin(x15 + x[0]) - u[0]*(x4 + x6) - x0*x17*(x19 + x20 + 0.5*x21)*sin(x15) - x10*(0.5*x1 - x11*x16 + x7) + 0.5*x12*x2*x9*sin(x[0] - x[1]) + x13*(J2*x11 + m2*(J2*l1 + x11*x5) + x18) - x14*(2.0*J2*x20 + J2*x21 + m2*(x0*x19 + x5*pow(x[2] + x[3], 2.0)) + x19*(J2 + x7)))/x6;
+ 
+}
+
 void OCPModel::stateEquation(const double t, const double dtau, const double* x, 
-                             const double* u, double* dx) const {
+                             const double* u, double* F) const {
   double x0 = d2*g;
   double x1 = m2*x0*sin(x[0] + x[1]);
   double x2 = d1*m1;
@@ -28,10 +59,10 @@ void OCPModel::stateEquation(const double t, const double dtau, const double* x,
   double x19 = pow(x[2], 2.0);
   double x20 = x[2]*x[3];
   double x21 = pow(x[3], 2.0);
-  dx[0] = dtau*x[2] + x[0];
-  dx[1] = dtau*x[3] + x[1];
-  dx[2] = x14*(u[0] - x1 - x4*x5 + 2.0*x7*x[3]*(x[2] + 0.5*x[3])) + x[2];
-  dx[3] = x[3] + x14*(-g*x18*sin(x15 + x[0]) - u[0]*(x10 + x12) + 0.5*x0*x3*x4*sin(x[0] - x[1]) - x1*(x13 - x16*x2 + 0.5*x9) - x17*x8*(x19 + x20 + 0.5*x21)*sin(x15) + x5*(J2*x2 + m2*(J2*l1 + x11*x2) + x18) - x7*(2.0*J2*x20 + J2*x21 + m2*(x11*pow(x[2] + x[3], 2.0) + x19*x8) + x19*(J2 + x13)))/x12;
+  F[0] = dtau*x[2] + x[0];
+  F[1] = dtau*x[3] + x[1];
+  F[2] = x14*(u[0] - x1 - x4*x5 + 2.0*x7*x[3]*(x[2] + 0.5*x[3])) + x[2];
+  F[3] = x[3] + x14*(-g*x18*sin(x15 + x[0]) - u[0]*(x10 + x12) + 0.5*x0*x3*x4*sin(x[0] - x[1]) - x1*(x13 - x16*x2 + 0.5*x9) - x17*x8*(x19 + x20 + 0.5*x21)*sin(x15) + x5*(J2*x2 + m2*(J2*l1 + x11*x2) + x18) - x7*(2.0*J2*x20 + J2*x21 + m2*(x11*pow(x[2] + x[3], 2.0) + x19*x8) + x19*(J2 + x13)))/x12;
  
 }
 
@@ -43,17 +74,18 @@ void OCPModel::stageCostDerivatives(const double t, const double dtau,
   double x1 = dtau*q[1];
   double x2 = dtau*q[2];
   double x3 = dtau*q[3];
-  double x4 = dtau*r[0];
+  double x4 = -u[0] + u_max;
+  double x5 = u[0] - u_min;
   lx[0] += (1.0/2.0)*x0*(2*x[0] - 2*x_ref[0]);
   lx[1] += (1.0/2.0)*x1*(2*x[1] - 2*x_ref[1]);
   lx[2] += (1.0/2.0)*x2*(2*x[2] - 2*x_ref[2]);
   lx[3] += (1.0/2.0)*x3*(2*x[3] - 2*x_ref[3]);
-  lu[0] += u[0]*x4;
+  lu[0] += dtau*(r[0]*u[0] - 1/x5 + 1.0/x4);
   lxx[0] += x0;
   lxx[5] += x1;
   lxx[10] += x2;
   lxx[15] += x3;
-  luu[0] += x4;
+  luu[0] += dtau*(r[0] + pow(x5, -2) + pow(x4, -2));
  
 }
 

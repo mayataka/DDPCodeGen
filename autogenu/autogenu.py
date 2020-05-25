@@ -144,7 +144,9 @@ class AutoGenU(object):
         x = sympy.symbols('x[0:%d]' %(self.__dimx))
         u = sympy.symbols('u[0:%d]' %(self.__dimu))
         dtau = sympy.Symbol('dtau')
-        f = [x[i] + dtau * f[i] for i in range(self.__dimx)]
+        self.__f = f
+        F = [x[i] + dtau * f[i] for i in range(self.__dimx)]
+        self.__F = F
         l = dtau * l
         self.__l = l
         self.__lx = symfunc.diff_scalar_func(l, x)
@@ -156,30 +158,29 @@ class AutoGenU(object):
         self.__phix = symfunc.diff_scalar_func(phi, x)
         self.__phixx = symfunc.diff_vector_func(self.__phix, x)
         Vx = sympy.symbols('Vx[0:%d]' %(self.__dimx))
-        self.__f = f
-        fx = symfunc.diff_vector_func(f, x)
-        fu = symfunc.diff_vector_func(f, u)
-        fx_trans = symfunc.transpose(fx)
-        fu_trans = symfunc.transpose(fu)
-        self.__fxVx = symfunc.matrix_dot_vector(fx_trans, Vx)
-        self.__fuVx = symfunc.matrix_dot_vector(fu_trans, Vx)
+        Fx = symfunc.diff_vector_func(F, x)
+        Fu = symfunc.diff_vector_func(F, u)
+        Fx_trans = symfunc.transpose(Fx)
+        Fu_trans = symfunc.transpose(Fu)
+        self.__FxVx = symfunc.matrix_dot_vector(Fx_trans, Vx)
+        self.__FuVx = symfunc.matrix_dot_vector(Fu_trans, Vx)
         Vxx_array = sympy.symbols('Vxx[0:%d]' %(self.__dimx**2))
         Vxx = [[Vxx_array[self.__dimx*i+j] for j in range(self.__dimx)] for i in range(self.__dimx)]
-        self.__fxVxxfx = symfunc.matrix_dot_matrix(fx_trans, symfunc.matrix_dot_matrix(Vxx, fx))
-        self.__fuVxxfx = symfunc.matrix_dot_matrix(fu_trans, symfunc.matrix_dot_matrix(Vxx, fx))
-        self.__fuVxxfu = symfunc.matrix_dot_matrix(fu_trans, symfunc.matrix_dot_matrix(Vxx, fu))
-        Vxf = sum(f[i] * Vx[i] for i in range(self.__dimx))
-        Vxfx = symfunc.diff_scalar_func(Vxf, x)
-        Vxfu = symfunc.diff_scalar_func(Vxf, u)
-        self.__Vxfxx = symfunc.diff_vector_func(Vxfx, x)
-        self.__Vxfux = symfunc.diff_vector_func(Vxfu, x)
-        self.__Vxfuu = symfunc.diff_vector_func(Vxfu, u)
-        assert len(self.__fxVxxfx) == len(self.__Vxfxx)
-        assert len(self.__fxVxxfx[0]) == len(self.__Vxfxx[0])
-        assert len(self.__fuVxxfx) == len(self.__Vxfux)
-        assert len(self.__fuVxxfx[0]) == len(self.__Vxfux[0])
-        assert len(self.__fuVxxfu) == len(self.__Vxfuu)
-        assert len(self.__fuVxxfu[0]) == len(self.__Vxfuu[0])
+        self.__FxVxxFx = symfunc.matrix_dot_matrix(Fx_trans, symfunc.matrix_dot_matrix(Vxx, Fx))
+        self.__FuVxxFx = symfunc.matrix_dot_matrix(Fu_trans, symfunc.matrix_dot_matrix(Vxx, Fx))
+        self.__FuVxxFu = symfunc.matrix_dot_matrix(Fu_trans, symfunc.matrix_dot_matrix(Vxx, Fu))
+        VxF = sum(F[i] * Vx[i] for i in range(self.__dimx))
+        VxFx = symfunc.diff_scalar_func(VxF, x)
+        VxFu = symfunc.diff_scalar_func(VxF, u)
+        self.__VxFxx = symfunc.diff_vector_func(VxFx, x)
+        self.__VxFux = symfunc.diff_vector_func(VxFu, x)
+        self.__VxFuu = symfunc.diff_vector_func(VxFu, u)
+        assert len(self.__FxVxxFx) == len(self.__VxFxx)
+        assert len(self.__FxVxxFx[0]) == len(self.__VxFxx[0])
+        assert len(self.__FuVxxFx) == len(self.__VxFux)
+        assert len(self.__FuVxxFx[0]) == len(self.__VxFux[0])
+        assert len(self.__FuVxxFu) == len(self.__VxFuu)
+        assert len(self.__FuVxxFu[0]) == len(self.__VxFuu[0])
         self.__is_function_set = True
 
     def set_solver_parameters(
@@ -208,32 +209,15 @@ class AutoGenU(object):
         self.__N = N
         self.__is_solver_paramters_set = True
 
-    def set_initialization_parameters(
-            self, solution_initial_guess, newton_residual_torelance, 
-            max_newton_iteration
-        ):
+    def set_solution_initial_guess(self, solution_initial_guess):
         """ Set parameters for the initialization of the C/GMRES solvers. 
 
             Args: 
                 solution_initial_guess: The initial guess of the solution of the 
-                    initialization. Size must be the dimu + dimensions of C and 
-                    h.
-                newton_residual_torelance: The residual torelance of the 
-                    initialization solved by Newton's method. The Newton 
-                    iteration terminates if the optimality error is smaller than 
-                    this value.
-                max_newton_iteration: The maximum number of the Newton iteration. 
-                initial_Lagranme_multiplier: Optional parameter is you use 
-                    MSCGMRESWithInputSaturation. The initial guess of the 
-                    Lagrange multiplier with respect to the box constraint on 
-                    the control input that is condensed.
+                    initialization. 
         """
         assert len(solution_initial_guess) == self.__dimu
-        assert newton_residual_torelance > 0
-        assert max_newton_iteration > 0
         self.__solution_initial_guess = solution_initial_guess 
-        self.__newton_residual_torelance = newton_residual_torelance 
-        self.__max_newton_iteration = max_newton_iteration 
         self.__is_initialization_set = True
 
     def set_simulation_parameters(
@@ -273,14 +257,15 @@ class AutoGenU(object):
         self.__make_model_dir()
         if use_simplification:
             symfunc.simplify(self.__f)
-            symfunc.simplify(self.__fxVx)
-            symfunc.simplify(self.__fuVx)
-            symfunc.simplify(self.__fxVxxfx)
-            symfunc.simplify(self.__fuVxxfx)
-            symfunc.simplify(self.__fuVxxfu)
-            symfunc.simplify(self.__Vxfxx)
-            symfunc.simplify(self.__Vxfux)
-            symfunc.simplify(self.__Vxfuu)
+            symfunc.simplify(self.__F)
+            symfunc.simplify(self.__FxVx)
+            symfunc.simplify(self.__FuVx)
+            symfunc.simplify(self.__FxVxxFx)
+            symfunc.simplify(self.__FuVxxFx)
+            symfunc.simplify(self.__FuVxxFu)
+            symfunc.simplify(self.__VxFxx)
+            symfunc.simplify(self.__VxFux)
+            symfunc.simplify(self.__VxFuu)
             symfunc.simplify(self.__l)
             symfunc.simplify(self.__lx)
             symfunc.simplify(self.__lu)
@@ -293,8 +278,8 @@ class AutoGenU(object):
         f_model_h = open('models/'+str(self.__model_name)+'/ocp_model.hpp', 'w')
         f_model_h.writelines([
 """ 
-#ifndef OCP_MODEL_H
-#define OCP_MODEL_H
+#ifndef CDDP_OCP_MODEL_H
+#define CDDP_OCP_MODEL_H
 
 #define _USE_MATH_DEFINES
 
@@ -332,13 +317,21 @@ private:
 
 public:
 
-  // Computes the state equation f(t, x, u).
+  // Computes the dynamics f(t, x, u).
+  // t : time parameter
+  // x : state vector
+  // u : control input vector
+  // dx : the value of f(t, x, u)
+  void dynamics(const double t, const double dtau, const double* x, 
+                const double* u, double* dx) const;
+
+  // Computes the state equation F(t, x, u).
   // t : time parameter
   // x : state vector
   // u : control input vector
   // dx : the value of f(t, x, u)
   void stateEquation(const double t, const double dtau, const double* x, 
-                     const double* u, double* dx) const;
+                     const double* u, double* F) const;
 
   // Computes the partial derivative of terminal cost with respect to state, 
   // i.e., dphi/dx(t, x).
@@ -378,7 +371,7 @@ public:
 } // namespace cddp
 
 
-#endif // OCP_MODEL_H
+#endif // CDDP_OCP_MODEL_H
 """ 
         ])
         f_model_h.close()
@@ -390,11 +383,20 @@ public:
 
 namespace cddp {
 
-void OCPModel::stateEquation(const double t, const double dtau, const double* x, 
-                             const double* u, double* dx) const {
+void OCPModel::dynamics(const double t, const double dtau, const double* x, 
+                        const double* u, double* dx) const {
 """ 
         ])
         self.__write_function(f_model_c, self.__f, 'dx', "=", use_cse)
+        f_model_c.writelines([
+""" 
+}
+
+void OCPModel::stateEquation(const double t, const double dtau, const double* x, 
+                             const double* u, double* F) const {
+""" 
+        ])
+        self.__write_function(f_model_c, self.__F, 'F', "=", use_cse)
         f_model_c.writelines([
 """ 
 }
@@ -438,14 +440,14 @@ void OCPModel::dynamicsDerivatives(const double t, const double dtau,
 """
         ])
         self.__write_multiple_functions(
-            f_model_c, use_cse, "+=", [self.__fxVx, 'fxVx'], 
-            [self.__fuVx, 'fuVx'],
-            [symfunc.matrix_to_array(self.__fxVxxfx), 'fxVxxfx'],
-            [symfunc.matrix_to_array(self.__fuVxxfx), 'fuVxxfx'],
-            [symfunc.matrix_to_array(self.__fuVxxfu), 'fuVxxfu'],
-            [symfunc.matrix_to_array(self.__Vxfxx), 'Vxfxx'],
-            [symfunc.matrix_to_array(self.__Vxfux), 'Vxfux'],
-            [symfunc.matrix_to_array(self.__Vxfuu), 'Vxfuu']
+            f_model_c, use_cse, "+=", [self.__FxVx, 'fxVx'], 
+            [self.__FuVx, 'fuVx'],
+            [symfunc.matrix_to_array(self.__FxVxxFx), 'fxVxxfx'],
+            [symfunc.matrix_to_array(self.__FuVxxFx), 'fuVxxfx'],
+            [symfunc.matrix_to_array(self.__FuVxxFu), 'fuVxxfu'],
+            [symfunc.matrix_to_array(self.__VxFxx), 'Vxfxx'],
+            [symfunc.matrix_to_array(self.__VxFux), 'Vxfux'],
+            [symfunc.matrix_to_array(self.__VxFuu), 'Vxfuu']
         )
         f_model_c.writelines([
 """ 
@@ -465,6 +467,115 @@ int OCPModel::dimu() const {
         ])
         f_model_c.close() 
 
+
+    def generate_main(self):
+        """ Generates main.cpp that defines NMPC solver, set parameters for the 
+            solver, and run numerical simulation. Befire call this method,
+            set_solver_type(), set_solver_parameters(), 
+            set_initialization_parameters(), and set_simulation_parameters(),
+            must be called!
+        """
+        assert self.__is_solver_paramters_set, "Solver parameters are not set! Before call this method, call set_solver_parameters()"
+        assert self.__is_initialization_set, "Initialization parameters are not set! Before call this method, call set_initialization_parameters()"
+        assert self.__is_simulation_set, "Simulation parameters are not set! Before call this method, call set_simulation_parameters()"
+        """ Makes a directory where the C++ source files are generated.
+        """
+        f_main = open('models/'+str(self.__model_name)+'/main.cpp', 'w')
+        f_main.writelines([
+"""
+#include <string>
+
+#include "NMPC.hpp"
+#include "simulator.hpp"
+
+
+int main() {
+    """
+        ])
+        f_main.write('  const int N = '+str(self.__N)+';\n')
+        f_main.write('  const double T_f = '+str(self.__T_f)+';\n')
+        f_main.write('  const double alpha = '+str(self.__alpha)+';\n')
+        f_main.write('  const double dt = '+str(0.001)+';\n')
+        f_main.write('  cddp::NMPC<'+str(self.__dimx)+', '+str(self.__dimu)+'> nmpc(T_f, alpha, N, dt);\n')
+        f_main.write('  double x0['+str(self.__dimx)+'] = {')
+        for i in range(self.__dimx-1):
+            f_main.write(str(self.__initial_state[i])+', ')
+        f_main.write(str(self.__initial_state[self.__dimx-1])+'};\n')
+        f_main.write('  double u0['+str(self.__dimu)+'] = {')
+        for i in range(self.__dimu-1):
+            f_main.write(str(self.__solution_initial_guess[i])+', ')
+        f_main.write(str(self.__solution_initial_guess[self.__dimu-1])+'};\n')
+        f_main.write('  nmpc.setControlInput(u0);\n')
+        f_main.write('  const double simulation_time = '+str(self.__simulation_time)+';\n')
+        f_main.write('  const double sampling_time = '+str(self.__sampling_time)+';\n')
+        f_main.write('  const std::string save_dir = "simulation_result";\n')
+        f_main.write('  const std::string save_file_name = "'+str(self.__model_name)+'";\n')
+        f_main.write('  cddp::simulation<cddp::NMPC<'+str(self.__dimx)+', '+str(self.__dimu)+'>>(nmpc, x0, simulation_time, sampling_time, save_dir, save_file_name);\n')
+        f_main.writelines([
+"""
+  return 0;
+}
+"""
+        ])
+        f_main.close()
+    
+    def generate_cmake(self):
+        f_cmake= open('models/'+str(self.__model_name)+'/CMakeLists.txt', 'w')
+        f_cmake.writelines([
+"""
+cmake_minimum_required(VERSION 3.1)
+project(cddp CXX)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "-O3")
+
+set(MODEL_DIR ${PROJECT_SOURCE_DIR})
+set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../../include)
+set(SRC_DIR ${PROJECT_SOURCE_DIR}/../../src)
+
+add_library(
+    ocp_model
+    STATIC
+    ${MODEL_DIR}/ocp_model.cpp
+)
+
+add_library(
+    memory_manager
+    STATIC
+    ${SRC_DIR}/memory_manager.cpp
+)
+target_include_directories(
+    memory_manager
+    PRIVATE
+    ${INCLUDE_DIR}
+)
+
+add_executable(
+    a.out 
+    ${MODEL_DIR}/main.cpp
+    ${SRC_DIR}/simulation_data_saver.cpp
+)
+target_include_directories(
+    a.out
+    PRIVATE
+    ${MODEL_DIR}
+    ${INCLUDE_DIR}
+)
+target_link_libraries(
+    a.out
+    PRIVATE
+    ocp_model
+    memory_manager
+)
+target_compile_options(
+    a.out
+    PRIVATE
+    -O3
+)
+"""
+        ])
+        f_cmake.close()
+
     def build(self, generator='Auto', remove_build_dir=False):
         """ Builds execute file to run numerical simulation. 
 
@@ -481,99 +592,36 @@ int OCPModel::dimu() const {
                     Need to be set True is you change CMake configuration, e.g., 
                     if you change the generator. The default value is False.
         """
-        if platform.system() == 'Windows':
-            subprocess.run(
-                ['mkdir', 'build'], 
-                cwd='models/'+self.__model_name, 
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.PIPE, 
-                shell=True
-            )
-            if generator == 'MSYS':
-                proc = subprocess.Popen(
-                    ['cmake', '../../..', '-G', 'MSYS Makefiles'], 
-                    cwd='models/'+self.__model_name+'/build', 
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.STDOUT, 
-                    shell=True
-                )
-                for line in iter(proc.stdout.readline, b''):
-                    print(line.rstrip().decode("utf8"))
-                print('\n')
-            elif generator == 'MinGW':
-                proc = subprocess.Popen(
-                    ['cmake', '../../..', '-G', 'MinGW Makefiles'], 
-                    cwd='models/'+self.__model_name+'/build', 
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.STDOUT, 
-                    shell=True
-                )
-                for line in iter(proc.stdout.readline, b''):
-                    print(line.rstrip().decode("utf8"))
-                print('\n')
-            else:
-                proc = subprocess.Popen(
-                    ['where', 'sh.exe'], 
-                    cwd='C:', 
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.PIPE, 
-                    shell=True
-                )
-                if proc.stderr.readline() == b'':
-                    proc = subprocess.Popen(
-                        ['cmake', '../../..', '-G', 'MSYS Makefiles'], 
-                        cwd='models/'+self.__model_name+'/build', 
-                        stdout=subprocess.PIPE, 
-                        stderr=subprocess.STDOUT, 
-                        shell=True
-                    )
-                else:
-                    proc = subprocess.Popen(
-                        ['cmake', '../../..', '-G', 'MinGW Makefiles'], 
-                        cwd='models/'+self.__model_name+'/build', 
-                        stdout=subprocess.PIPE, 
-                        stderr=subprocess.STDOUT, 
-                        shell=True
-                    )
-                for line in iter(proc.stdout.readline, b''):
-                    print(line.rstrip().decode("utf8"))
-                print('\n')
-            proc = subprocess.Popen(
-                ['cmake', '--build', '.'], 
-                cwd='models/'+self.__model_name+'/build', 
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.STDOUT, 
-                shell=True
-            )
-            for line in iter(proc.stdout.readline,b''):
-                print(line.rstrip().decode("utf8"))
-            print('\n')
-            
-        else:
-            subprocess.run(
-                ['mkdir', 'build'], 
-                cwd='models/'+self.__model_name, 
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.PIPE
-            )
-            proc = subprocess.Popen(
-                ['cmake', '../../..'], 
-                cwd='models/'+self.__model_name+'/build', 
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.STDOUT
-            )
-            for line in iter(proc.stdout.readline, b''):
-                print(line.rstrip().decode("utf8"))
-            print('\n')
-            proc = subprocess.Popen(
-                ['cmake', '--build', '.'], 
-                cwd='models/'+self.__model_name+'/build', 
-                stdout = subprocess.PIPE, 
-                stderr = subprocess.STDOUT
-            )
-            for line in iter(proc.stdout.readline, b''):
-                print(line.rstrip().decode("utf8"))
-            print('\n')
+        subprocess.run(
+            ['mkdir', 'build'], 
+            cwd='models/'+self.__model_name, 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE
+        )
+        subprocess.run(
+            ['mkdir', 'simulation_result'], 
+            cwd='models/'+self.__model_name+'/build',
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE
+        )
+        proc = subprocess.Popen(
+            ['cmake', '..', '-DCMAKE_BUILD_TYPE=Release'], 
+            cwd='models/'+self.__model_name+'/build', 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.STDOUT
+        )
+        for line in iter(proc.stdout.readline, b''):
+            print(line.rstrip().decode("utf8"))
+        print('\n')
+        proc = subprocess.Popen(
+            ['cmake', '--build', '.'], 
+            cwd='models/'+self.__model_name+'/build', 
+            stdout = subprocess.PIPE, 
+            stderr = subprocess.STDOUT
+        )
+        for line in iter(proc.stdout.readline, b''):
+            print(line.rstrip().decode("utf8"))
+        print('\n')
 
     def run_simulation(self):
         """ Run numerical simulation. Call after build() succeeded.

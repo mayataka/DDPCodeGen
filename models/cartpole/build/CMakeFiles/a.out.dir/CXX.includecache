@@ -54,23 +54,17 @@ ocp_model.hpp
 simulation_data_saver.hpp
 ../../../include/simulation_data_saver.hpp
 
+..//ocp_model.hpp
+cmath
+-
+
 /home/sotaro/src/continuation-DDP/models/cartpole/main.cpp
-iostream
--
-chrono
--
 string
 -
-ocp_model.hpp
-/home/sotaro/src/continuation-DDP/models/cartpole/ocp_model.hpp
 NMPC.hpp
 /home/sotaro/src/continuation-DDP/models/cartpole/NMPC.hpp
 simulator.hpp
 /home/sotaro/src/continuation-DDP/models/cartpole/simulator.hpp
-
-/home/sotaro/src/continuation-DDP/models/cartpole/ocp_model.hpp
-cmath
--
 
 /home/sotaro/src/continuation-DDP/src/simulation_data_saver.cpp
 simulation_data_saver.hpp

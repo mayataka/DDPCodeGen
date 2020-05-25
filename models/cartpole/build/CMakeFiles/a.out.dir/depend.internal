@@ -10,5 +10,5 @@ CMakeFiles/a.out.dir/main.cpp.o
  ../../../include/memory_manager.hpp
  ../../../include/simulation_data_saver.hpp
  ../../../include/simulator.hpp
+ ..//ocp_model.hpp
  /home/sotaro/src/continuation-DDP/models/cartpole/main.cpp
- /home/sotaro/src/continuation-DDP/models/cartpole/ocp_model.hpp

@@ -4,17 +4,31 @@
 
 namespace cddp {
 
+void OCPModel::dynamics(const double t, const double dtau, const double* x, 
+                        const double* u, double* dx) const {
+  double x0 = sin(x[1]);
+  double x1 = 1.0/(m_c + m_p*pow(x0, 2));
+  double x2 = cos(x[1]);
+  double x3 = l*pow(x[1], 2);
+  double x4 = m_p*x0;
+  dx[0] = x[2];
+  dx[1] = x[3];
+  dx[2] = x1*(u[0] + x4*(g*x2 + x3));
+  dx[3] = x1*(-g*x0*(m_c + m_p) - u[0]*x2 - x2*x3*x4)/l;
+ 
+}
+
 void OCPModel::stateEquation(const double t, const double dtau, const double* x, 
-                             const double* u, double* dx) const {
+                             const double* u, double* F) const {
   double x0 = cos(x[1]);
   double x1 = l*pow(x[1], 2);
   double x2 = sin(x[1]);
   double x3 = m_p*x2;
   double x4 = dtau/(m_c + m_p*pow(x2, 2));
-  dx[0] = dtau*x[2] + x[0];
-  dx[1] = dtau*x[3] + x[1];
-  dx[2] = x4*(u[0] + x3*(g*x0 + x1)) + x[2];
-  dx[3] = x[3] + x4*(-g*x2*(m_c + m_p) - u[0]*x0 - x0*x1*x3)/l;
+  F[0] = dtau*x[2] + x[0];
+  F[1] = dtau*x[3] + x[1];
+  F[2] = x4*(u[0] + x3*(g*x0 + x1)) + x[2];
+  F[3] = x[3] + x4*(-g*x2*(m_c + m_p) - u[0]*x0 - x0*x1*x3)/l;
  
 }
 
@@ -26,17 +40,18 @@ void OCPModel::stageCostDerivatives(const double t, const double dtau,
   double x1 = dtau*q[1];
   double x2 = dtau*q[2];
   double x3 = dtau*q[3];
-  double x4 = dtau*r[0];
+  double x4 = -u[0] + u_max;
+  double x5 = u[0] - u_min;
   lx[0] += (1.0/2.0)*x0*(2*x[0] - 2*x_ref[0]);
   lx[1] += (1.0/2.0)*x1*(2*x[1] - 2*x_ref[1]);
   lx[2] += (1.0/2.0)*x2*(2*x[2] - 2*x_ref[2]);
   lx[3] += (1.0/2.0)*x3*(2*x[3] - 2*x_ref[3]);
-  lu[0] += u[0]*x4;
+  lu[0] += dtau*(r[0]*u[0] - 1/x5 + 1.0/x4);
   lxx[0] += x0;
   lxx[5] += x1;
   lxx[10] += x2;
   lxx[15] += x3;
-  luu[0] += x4;
+  luu[0] += dtau*(r[0] + pow(x5, -2) + pow(x4, -2));
  
 }
 
