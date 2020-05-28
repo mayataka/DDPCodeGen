@@ -1,2 +1,0 @@
-/usr/bin/ar qc libocp_model.a  CMakeFiles/ocp_model.dir/ocp_model.cpp.o
-/usr/bin/ranlib libocp_model.a

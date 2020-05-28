@@ -6,7 +6,7 @@
 #include <string>
 #include <chrono>
 
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 
 #include "ocp_model.hpp"
 #include "simulation_data_saver.hpp"

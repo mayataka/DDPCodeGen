@@ -1,5 +1,6 @@
 #include "memory_manager.hpp"
 
+
 namespace cddp {
 namespace memorymanager {
 
@@ -34,6 +35,7 @@ void DeleteMatrix(double** mat) {
   delete[] mat[0];
   delete[] mat;
 }
+
 
 } // namespace memorymanager
 } // namespace cddp 

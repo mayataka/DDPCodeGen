@@ -5,7 +5,7 @@ from enum import Enum, auto
 
 import sympy
 
-from autogenu import symbolic_functions as symfunc
+from ddpcodegen import symbolic_functions as symfunc
 
 
 class SolverType(Enum):
@@ -13,7 +13,7 @@ class SolverType(Enum):
     MultipleShootingCGMRES = auto()
     MSCGMRESWithInputSaturation = auto()
 
-class AutoGenU(object):
+class DDPCodeGen(object):
     """ Automatic C++ code generator for the C/GMRES methods. 
 
         Args: 
@@ -495,8 +495,7 @@ int main() {
         f_main.write('  const int N = '+str(self.__N)+';\n')
         f_main.write('  const double T_f = '+str(self.__T_f)+';\n')
         f_main.write('  const double alpha = '+str(self.__alpha)+';\n')
-        f_main.write('  const double dt = '+str(0.001)+';\n')
-        f_main.write('  cddp::NMPC<'+str(self.__dimx)+', '+str(self.__dimu)+'> nmpc(T_f, alpha, N, dt);\n')
+        f_main.write('  cddp::NMPC<'+str(self.__dimx)+', '+str(self.__dimu)+'> nmpc(T_f, alpha, N);\n')
         f_main.write('  double x0['+str(self.__dimx)+'] = {')
         for i in range(self.__dimx-1):
             f_main.write(str(self.__initial_state[i])+', ')
@@ -526,12 +525,13 @@ int main() {
 cmake_minimum_required(VERSION 3.1)
 project(cddp CXX)
 
-set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-O3")
 
 set(MODEL_DIR ${PROJECT_SOURCE_DIR})
 set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../../include)
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/../../src)
+
+find_package( Eigen3 REQUIRED )
 
 add_library(
     ocp_model
@@ -560,6 +560,7 @@ target_include_directories(
     PRIVATE
     ${MODEL_DIR}
     ${INCLUDE_DIR}
+    ${EIGEN3_INCLUDE_DIR}
 )
 target_link_libraries(
     a.out

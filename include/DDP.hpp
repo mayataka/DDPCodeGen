@@ -3,8 +3,8 @@
 
 #include <iostream>
 #include <assert.h>
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/LU>
+#include <Eigen/Core>
+#include <Eigen/LU>
 
 #include "ocp_model.hpp"
 #include "memory_manager.hpp"
@@ -12,7 +12,7 @@
 
 namespace cddp {
 
-template<int dimx, int dimu>
+template<unsigned int dimx, unsigned int dimu>
 class DDP {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -138,31 +138,15 @@ public:
     ocp_model_.stateEquation(t+(N_-1)*dtau_, dtau_, x_[N_-2], u_[N_-1], x_[N_-1]);
   }
 
-  void setControlInput(const double* u) {
-    for (int i=0; i<N_; ++i) {
-      Eigen::Map<Eigen::VectorXd>(u_[i], dimu) 
-          = Eigen::Map<const Eigen::Matrix<double, dimu, 1>>(u);
-    }
-  }
-
   void getInitialControlInput(double* u) const {
     Eigen::Map<Eigen::VectorXd>(u, dimu) 
         = Eigen::Map<Eigen::Matrix<double, dimu, 1>>(u_[0]);
   }
 
-  void predictState(const double t, const double* x, 
-                    const double prediction_length, double* x1) const {
-    ocp_model_.stateEquation(t, prediction_length, x, u_[0], x1);
-  }
-
-  void printSolution() const {
+  void setControlInput(const double* u) {
     for (int i=0; i<N_; ++i) {
-      std::cout << "u[" << i << "] = " 
-                << Eigen::Map<Eigen::VectorXd>(u_[i], dimu).transpose() 
-                << std::endl;
-      std::cout << "x[" << i << "] = " 
-                << Eigen::Map<Eigen::VectorXd>(x_[i], dimx).transpose() 
-                << std::endl;
+      Eigen::Map<Eigen::VectorXd>(u_[i], dimu) 
+          = Eigen::Map<const Eigen::Matrix<double, dimu, 1>>(u);
     }
   }
 
@@ -172,12 +156,12 @@ public:
   }
 
   // Returns the dimension of the state.
-  int dim_x() const {
+  unsigned int dim_x() const {
     return dimx_;
   }
 
   // Returns the dimension of the contorl input.
-  int dim_u() const {
+  unsigned int dim_u() const {
     return dimu_;
   }
 

@@ -8,7 +8,7 @@ import mpl_toolkits.mplot3d as a3
 import mpl_toolkits.mplot3d.art3d as art3d 
 from matplotlib.animation import FuncAnimation
 
-from autogenu import simulation_conditions as simcon
+from ddpcodegen import simulation_conditions as simcon
 
 
 class TwoLinkArm(object):
